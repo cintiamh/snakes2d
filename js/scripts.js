@@ -2,6 +2,7 @@ var snakesModule = function() {
     var apple = null,
         blocks_num = 25,
         block_size = 0,
+        count = 0,
         direction = [
             {x: -1, y: 0},
             {x: 0, y: -1},
@@ -14,6 +15,7 @@ var snakesModule = function() {
         size = 0,
         snake = null,
         stage = null,
+        startTime = 0,
         width = window.innerWidth;
 
     function Apple() {
@@ -77,7 +79,9 @@ var snakesModule = function() {
 
     // Snake is a linked list, we have a reference to the head
     function Snake(x, y) {
-        this.snakeLayer = new Kinetic.Layer();
+        this.layer = new Kinetic.Layer();
+        this.group = new Kinetic.Group();
+        this.layer.add(this.group);
         this.head = null;
         this.tail = null;
         this.x = x;
@@ -87,14 +91,16 @@ var snakesModule = function() {
         this.add(); // tail
         this.add(); // body
 
-        stage.add(this.snakeLayer);
-        var animation = animate(this.snakeLayer);
+        stage.add(this.layer);
+        var animation = animate(this.layer);
         animation.start();
     }
 
     Snake.prototype.add = function() {
+        count++;
         var node = new Node(this.x, this.y);
-        this.snakeLayer.add(node.body);
+        this.group.add(node.body);
+//        this.layer.add(node.body);
 
         if (this.head == null) {
             this.head = node;
@@ -122,7 +128,10 @@ var snakesModule = function() {
 
             if (this.checkGameOver()) {
                 console.log("Game Over");
-                location.reload(false);
+                console.log(count);
+                this.group.remove();
+                overlay();
+//                location.reload(false);
             }
             this.getApple();
         }
@@ -231,10 +240,18 @@ var snakesModule = function() {
         console.log("Start");
     }
 
+    function reloadGame() {
+        location.reload(false);
+        overlay();
+    }
+
     function addEventListeners() {
-        var canvas = document.getElementsByTagName('canvas')[0];
-        canvas.addEventListener("touchstart", handleStart, false);
-        canvas.addEventListener("click", handleStart, false);
+//        var canvas = document.getElementsByTagName('canvas')[0];
+//        canvas.addEventListener("touchstart", handleStart, false);
+//        canvas.addEventListener("click", handleStart, false);
+        var reload_btn = document.getElementById('reload');
+        reload_btn.addEventListener("touchstart", reloadGame, false);
+        reload_btn.addEventListener("click", reloadGame, false);
     }
 
     function changeDirection(dir) {
@@ -246,11 +263,19 @@ var snakesModule = function() {
         }
     }
 
+    function overlay() {
+        el = document.getElementById("overlay");
+        el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
+        score_span = document.getElementById("score");
+        score_span.innerHTML = count;
+    }
+
     function init() {
         createCanvas();
         drawGrid();
         createSnake();
         createApple();
+        addEventListeners();
     }
 
     return {
