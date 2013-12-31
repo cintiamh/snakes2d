@@ -29,23 +29,40 @@ var snakesModule = function() {
             strokeWidth: 1
         });
         this.next = null;
+        this.prev = null;
     }
 
     // Snake is a linked list, we have a reference to the head
     function Snake(x, y) {
-        var snakeLayer = new Kinetic.Layer();
-        // head
-        this.head = new Node(x, y);
-        snakeLayer.add(this.head.body);
-        // body
-        this.head.next = new Node(x + 1, y);
-        snakeLayer.add(this.head.next.body);
-        // tail
-        this.head.next.next = new Node(x + 2, y);
-        snakeLayer.add(this.head.next.next.body);
-        stage.add(snakeLayer);
-        var animation = animate(snakeLayer);
+        this.snakeLayer = new Kinetic.Layer();
+        this.head = null;
+        this.tail = null;
+        this.x = x;
+        this.y = y;
+
+        this.add(); // head
+        this.add(); // tail
+        this.add(); // body
+
+        stage.add(this.snakeLayer);
+        var animation = animate(this.snakeLayer);
         animation.start();
+    }
+
+    Snake.prototype.add = function() {
+        var node = new Node(this.x, this.y);
+        this.snakeLayer.add(node.body);
+
+        if (this.head == null) {
+            this.head = node;
+            this.tail = this.head;
+        }
+        else {
+            node.prev = this.tail;
+            this.tail.next = node;
+            this.tail = node;
+            this.move();
+        }
     }
 
     Snake.prototype.move = function() {
