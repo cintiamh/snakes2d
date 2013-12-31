@@ -49,13 +49,28 @@ var snakesModule = function() {
     }
 
     Snake.prototype.move = function() {
-        var node = this.head;
-        while (node != null) {
-            node.x = node.x + direction[direction_index].x;
-            node.y = node.y + direction[direction_index].y;
+        var node = null,
+            positions = [];
+
+        node = this.head;
+
+        while (node.next != null) {
+            positions.push({x: node.x, y: node.y});
+            node = node.next;
+        }
+
+        node = this.head;
+        node.x = (node.x + direction[direction_index].x + blocks_num) % blocks_num;
+        node.y = (node.y + direction[direction_index].y + blocks_num) % blocks_num;
+        node.body.setX(node.x * block_size);
+        node.body.setY(node.y * block_size);
+
+        for (var i = 0; i < positions.length; i++) {
+            node = node.next;
+            node.x = positions[i].x;
+            node.y = positions[i].y;
             node.body.setX(node.x * block_size);
             node.body.setY(node.y * block_size);
-            node = node.next;
         }
     }
 
@@ -109,6 +124,7 @@ var snakesModule = function() {
     function createSnake() {
         var middle = Math.floor(blocks_num / 2);
         snake = new Snake(middle, middle);
+        addEventListeners();
     }
 
     function animate(layer) {
@@ -125,24 +141,44 @@ var snakesModule = function() {
         console.log("Start");
     }
 
-//    function addEventListeners() {
-//        canvas.addEventListener("touchstart", handleStart, false);
-//        canvas.addEventListener("click", handleStart, false);
-//    }
+    function addEventListeners() {
+        var canvas = document.getElementsByTagName('canvas')[0];
+        canvas.addEventListener("touchstart", handleStart, false);
+        canvas.addEventListener("click", handleStart, false);
+    }
+
+    function changeDirection(dir) {
+        if (dir > 0) {
+            direction_index = (direction_index + direction.length + 1) % direction.length;
+        }
+        else {
+            direction_index = (direction_index + direction.length - 1) % direction.length;
+        }
+    }
 
     function init() {
         createCanvas();
         drawGrid();
         createSnake();
-
-//        addEventListeners();
     }
 
     return {
-        init: init
+        init: init,
+        changeDirection: changeDirection
     };
 }();
 
 (function() {
     snakesModule.init();
+
+    window.onkeydown = function(event) {
+        switch (event.keyCode) {
+            case 37:
+                snakesModule.changeDirection(-1);
+                break;
+            case 39:
+                snakesModule.changeDirection(1);
+                break;
+        }
+    }
 })();
