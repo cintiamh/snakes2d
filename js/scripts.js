@@ -10,7 +10,7 @@ var snakesModule = function() {
         ],
         direction_index = 0,
         height = window.innerHeight,
-        period = 600, // ms
+        period = 500, // ms
         size = 0,
         snake = null,
         stage = null,
@@ -27,23 +27,28 @@ var snakesModule = function() {
             radius: radius,
             fill: "#FF0000"
         });
+        this.layer.add(this.apple);
     }
 
     Apple.prototype.setPosition = function(x, y) {
-
         var radius = block_size / 2;
         this.x = x;
         this.y = y;
-
         this.apple.setX(this.x * block_size + radius);
         this.apple.setY(this.y * block_size + radius);
+        this.layer.draw();
     }
 
     Apple.prototype.move = function() {
         var x = Math.floor(Math.random() * blocks_num),
             y = Math.floor(Math.random() * blocks_num);
-        console.log(x + ", " + y);
-        this.setPosition(x, y);
+
+        if (snake.isColliding(x, y, true)) {
+            this.move();
+        }
+        else {
+            this.setPosition(x, y);
+        }
     }
 
     // A Node is a segment of Snake's body
@@ -114,6 +119,42 @@ var snakesModule = function() {
             node.setPosition(
                 (node.x + direction[direction_index].x + blocks_num) % blocks_num,
                 (node.y + direction[direction_index].y + blocks_num) % blocks_num);
+
+            if (this.checkGameOver()) {
+                console.log("Game Over");
+                location.reload(false);
+            }
+            this.getApple();
+        }
+    }
+
+    Snake.prototype.isColliding = function(x, y, head) {
+        var node = this.head;
+        if (!head) {
+            node = node.next;
+        }
+        while (node != null) {
+            if (node.x == x && node.y == y) {
+                return true;
+            }
+            node = node.next;
+        }
+        return false;
+    }
+
+    Snake.prototype.checkGameOver = function() {
+        if (this.isColliding(this.head.x, this.head.y, false)) {
+            return true;
+        }
+        return false;
+    }
+
+    Snake.prototype.getApple = function() {
+        if (this.head != null && this.tail != null && apple) {
+            if (this.head.x == apple.x && this.head.y == apple.y) {
+                this.add();
+                apple.move();
+            }
         }
     }
 
@@ -173,6 +214,7 @@ var snakesModule = function() {
     function createApple() {
         apple = new Apple();
         stage.add(apple.layer);
+        apple.move();
     }
 
     function animate(layer) {
@@ -209,7 +251,6 @@ var snakesModule = function() {
         drawGrid();
         createSnake();
         createApple();
-        apple.move();
     }
 
     return {
