@@ -1,5 +1,6 @@
 var snakesModule = function() {
-    var blocks_num = 25,
+    var apple = null,
+        blocks_num = 25,
         block_size = 0,
         direction = [
             {x: -1, y: 0},
@@ -14,6 +15,36 @@ var snakesModule = function() {
         snake = null,
         stage = null,
         width = window.innerWidth;
+
+    function Apple() {
+        var radius = block_size / 2;
+        this.x = 0;
+        this.y = 0;
+        this.layer = new Kinetic.Layer();
+        this.apple = new Kinetic.Circle({
+            x: this.x * block_size + radius,
+            y: this.y * block_size + radius,
+            radius: radius,
+            fill: "#FF0000"
+        });
+    }
+
+    Apple.prototype.setPosition = function(x, y) {
+
+        var radius = block_size / 2;
+        this.x = x;
+        this.y = y;
+
+        this.apple.setX(this.x * block_size + radius);
+        this.apple.setY(this.y * block_size + radius);
+    }
+
+    Apple.prototype.move = function() {
+        var x = Math.floor(Math.random() * blocks_num),
+            y = Math.floor(Math.random() * blocks_num);
+        console.log(x + ", " + y);
+        this.setPosition(x, y);
+    }
 
     // A Node is a segment of Snake's body
     function Node(x, y) {
@@ -30,6 +61,13 @@ var snakesModule = function() {
         });
         this.next = null;
         this.prev = null;
+    }
+
+    Node.prototype.setPosition = function(x, y) {
+        this.x = x;
+        this.y = y;
+        this.body.setX(this.x * block_size);
+        this.body.setY(this.y * block_size);
     }
 
     // Snake is a linked list, we have a reference to the head
@@ -66,28 +104,16 @@ var snakesModule = function() {
     }
 
     Snake.prototype.move = function() {
-        var node = null,
-            positions = [];
-
-        node = this.head;
-
-        while (node.next != null) {
-            positions.push({x: node.x, y: node.y});
-            node = node.next;
-        }
-
-        node = this.head;
-        node.x = (node.x + direction[direction_index].x + blocks_num) % blocks_num;
-        node.y = (node.y + direction[direction_index].y + blocks_num) % blocks_num;
-        node.body.setX(node.x * block_size);
-        node.body.setY(node.y * block_size);
-
-        for (var i = 0; i < positions.length; i++) {
-            node = node.next;
-            node.x = positions[i].x;
-            node.y = positions[i].y;
-            node.body.setX(node.x * block_size);
-            node.body.setY(node.y * block_size);
+        if (this.head != null && this.tail != null) {
+            var node = this.tail;
+            while (node != this.head) {
+                node.setPosition(node.prev.x, node.prev.y);
+                node = node.prev;
+            }
+            // got to head
+            node.setPosition(
+                (node.x + direction[direction_index].x + blocks_num) % blocks_num,
+                (node.y + direction[direction_index].y + blocks_num) % blocks_num);
         }
     }
 
@@ -144,6 +170,11 @@ var snakesModule = function() {
         addEventListeners();
     }
 
+    function createApple() {
+        apple = new Apple();
+        stage.add(apple.layer);
+    }
+
     function animate(layer) {
         var start = 0;
         return new Kinetic.Animation(function(frame) {
@@ -177,6 +208,8 @@ var snakesModule = function() {
         createCanvas();
         drawGrid();
         createSnake();
+        createApple();
+        apple.move();
     }
 
     return {
