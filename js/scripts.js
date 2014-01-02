@@ -3,19 +3,12 @@ var snakesModule = function() {
         blocks_num = 25,
         block_size = 0,
         count = 0,
-        direction = [
-            {x: -1, y: 0},
-            {x: 0, y: -1},
-            {x: 1, y: 0},
-            {x: 0, y: 1}
-        ],
-        direction_index = 0,
+        game_over = false,
         height = window.innerHeight,
         period = 500, // ms
         size = 0,
         snake = null,
         stage = null,
-        startTime = 0,
         width = window.innerWidth;
 
     function Apple() {
@@ -45,7 +38,7 @@ var snakesModule = function() {
         var x = Math.floor(Math.random() * blocks_num),
             y = Math.floor(Math.random() * blocks_num);
 
-        if (snake.isColliding(x, y, true)) {
+        if (snake.isColliding(x, y)) {
             this.move();
         }
         else {
@@ -53,10 +46,8 @@ var snakesModule = function() {
         }
     }
 
-    // A Node is a segment of Snake's body
+    // A Node is a segment of Snake's nodes
     function Node(x, y) {
-        this.x = x;
-        this.y = y;
         this.body = new Kinetic.Rect({
             x: this.x * block_size,
             y: this.y * block_size,
@@ -66,8 +57,12 @@ var snakesModule = function() {
             stroke: "#CCCCFF",
             strokeWidth: 1
         });
-        this.next = null;
-        this.prev = null;
+        this.x = x;
+        this.y = y;
+
+        this.setPosition(x, y);
+//        this.next = null;
+//        this.prev = null;
     }
 
     Node.prototype.setPosition = function(x, y) {
@@ -78,77 +73,138 @@ var snakesModule = function() {
     }
 
     // Snake is a linked list, we have a reference to the head
-    function Snake(x, y) {
-        this.layer = new Kinetic.Layer();
+    function Snake() {
+        this.nodes = [];
+        this.direction = "left";
         this.group = new Kinetic.Group();
+        this.layer = new Kinetic.Layer();
+        this.length = 0;
+//        this.x = x;
+//        this.y = y;
+
+
         this.layer.add(this.group);
-        this.head = null;
-        this.tail = null;
-        this.x = x;
-        this.y = y;
+
+
+
+//        this.head = null;
+//        this.tail = null;
 
         this.add(); // head
         this.add(); // tail
-        this.add(); // body
+        this.move();
+        this.add(); // nodes
+        this.move();
+        count = 0;
 
         stage.add(this.layer);
-        var animation = animate(this.layer);
-        animation.start();
+
+    }
+
+    Snake.prototype.getHead = function() {
+        return this.length > 0 ? this.nodes[0] : null;
+//        if (this.length > 0) {
+//            return this.nodes[0];
+//        }
+//        else {
+//            return null;
+//        }
     }
 
     Snake.prototype.add = function() {
         count++;
-        var node = new Node(this.x, this.y);
-        this.group.add(node.body);
-//        this.layer.add(node.body);
+        var head = this.getHead(),
+            node = new Node(Math.floor(blocks_num / 2), Math.floor(blocks_num / 2));
 
-        if (this.head == null) {
-            this.head = node;
-            this.tail = this.head;
+        if (head != null) {
+            node.setPosition(head.x, head.y);
         }
-        else {
-            node.prev = this.tail;
-            this.tail.next = node;
-            this.tail = node;
-            this.move();
-        }
+        this.group.add(node.body);
+        this.nodes.push(node);
+        this.length = this.nodes.length;
+//        this.layer.draw();
+
+//        if (this.head == null) {
+//            this.head = node;
+//            this.tail = this.head;
+//        }
+//        else {
+//            node.prev = this.tail;
+//            this.tail.next = node;
+//            this.tail = node;
+//            this.move();
+//        }
     }
 
     Snake.prototype.move = function() {
-        if (this.head != null && this.tail != null) {
-            var node = this.tail;
-            while (node != this.head) {
-                node.setPosition(node.prev.x, node.prev.y);
-                node = node.prev;
-            }
-            // got to head
-            node.setPosition(
-                (node.x + direction[direction_index].x + blocks_num) % blocks_num,
-                (node.y + direction[direction_index].y + blocks_num) % blocks_num);
+        if (this.length > 0) {
+            var head = this.getHead(),
+                tail = this.nodes.pop();
 
-            if (this.checkGameOver()) {
-                console.log("Game Over");
-                console.log(count);
-                this.group.remove();
-                overlay();
-//                location.reload(false);
+            if (head != null) {
+                var x = head.x,
+                    y = head.y;
+                switch (this.direction) {
+                    case "left":
+                        x = (x - 1 + blocks_num) % blocks_num;
+                        break;
+                    case "right":
+                        x = (x + 1) % blocks_num;
+                        break;
+                    case "up":
+                        y = (y - 1 + blocks_num) % blocks_num;
+                        break;
+                    case "down":
+                        y = (y + 1) % blocks_num;
+                        break;
+                }
+                tail.setPosition(x, y);
+                this.nodes.unshift(tail);
             }
+
             this.getApple();
         }
+//        if (this.head != null && this.tail != null) {
+//            var node = this.tail;
+//            while (node != this.head) {
+//                node.setPosition(node.prev.x, node.prev.y);
+//                node = node.prev;
+//            }
+//            // got to head
+//            node.setPosition(
+//                (node.x + direction[direction_index].x + blocks_num) % blocks_num,
+//                (node.y + direction[direction_index].y + blocks_num) % blocks_num);
+//
+//            if (this.checkGameOver()) {
+//                console.log("Game Over");
+//                console.log(count);
+//                this.group.remove();
+//                overlay();
+////                location.reload(false);
+//            }
+//            this.getApple();
+//        }
     }
 
-    Snake.prototype.isColliding = function(x, y, head) {
-        var node = this.head;
-        if (!head) {
-            node = node.next;
-        }
-        while (node != null) {
-            if (node.x == x && node.y == y) {
+    Snake.prototype.isColliding = function(x, y) {
+        var head = this.getHead();
+        for (var i = 1; i < this.length; i++) {
+            console.log(this.nodes[i]);
+            if (head.x == this.nodes[i].x && head.y == this.nodes[i].y) {
                 return true;
             }
-            node = node.next;
         }
         return false;
+//        if (!head) {
+//            node = node.next;
+//        }
+//        while (node != null) {
+//            if (node.x == x && node.y == y) {
+//                return true;
+//            }
+//            node = node.next;
+//        }
+//        return false;
     }
 
     Snake.prototype.checkGameOver = function() {
@@ -159,8 +215,8 @@ var snakesModule = function() {
     }
 
     Snake.prototype.getApple = function() {
-        if (this.head != null && this.tail != null && apple) {
-            if (this.head.x == apple.x && this.head.y == apple.y) {
+        if (this.length > 0 && apple) {
+            if (this.isColliding(apple.x, apple.y)) {
                 this.add();
                 apple.move();
             }
@@ -186,6 +242,8 @@ var snakesModule = function() {
             height: size
         });
         block_size = size / blocks_num;
+
+        drawGrid();
     }
 
     function drawGridLine(x0, y0, x1, y1) {
@@ -215,8 +273,7 @@ var snakesModule = function() {
 
     // Creates initial snake in the middle of grid
     function createSnake() {
-        var middle = Math.floor(blocks_num / 2);
-        snake = new Snake(middle, middle);
+        snake = new Snake();
         addEventListeners();
     }
 
@@ -226,15 +283,19 @@ var snakesModule = function() {
         apple.move();
     }
 
-    function animate(layer) {
-        var start = 0;
-        return new Kinetic.Animation(function(frame) {
-            if (frame.time - start >= period) {
-                start = frame.time;
-                snake.move();
-            }
-        }, layer);
-    }
+//    function animate(layer) {
+//        var start = 0;
+//        return new Kinetic.Animation(function(frame) {
+//            if (frame.time - start >= period) {
+//                start = frame.time;
+//                if (turn != 0) {
+//                    changeDirection(turn);
+//                    turn = 0;
+//                }
+//                snake.move();
+//            }
+//        }, layer);
+//    }
 
     function handleStart() {
         console.log("Start");
@@ -272,29 +333,46 @@ var snakesModule = function() {
 
     function init() {
         createCanvas();
-        drawGrid();
         createSnake();
         createApple();
         addEventListeners();
+
+        window.onkeydown = function(event) {
+            switch (event.keyCode) {
+                case 37:
+                    snake.direction = snake.direction == 'right' ? 'right' : 'left';
+                    break;
+                case 38:
+                    snake.direction = snake.direction == 'down' ? 'down' : 'up';
+                    break;
+                case 39:
+                    snake.direction = snake.direction == 'left' ? 'left' : 'right';
+                    break;
+                case 40:
+                    snake.direction = snake.direction == 'up' ? 'up' : 'down';
+                    break;
+            }
+        }
+
+        var start = 0;
+        var anim = new Kinetic.Animation(function(frame) {
+            if ((frame.time - start) >= period) {
+                snake.move();
+                start = frame.time;
+            }
+//            console.log("TEsting");
+        }, snake.layer);
+
+        anim.start();
     }
 
     return {
-        init: init,
-        changeDirection: changeDirection
+        init: init
     };
 }();
 
 (function() {
     snakesModule.init();
 
-    window.onkeydown = function(event) {
-        switch (event.keyCode) {
-            case 37:
-                snakesModule.changeDirection(-1);
-                break;
-            case 39:
-                snakesModule.changeDirection(1);
-                break;
-        }
-    }
+
 })();
