@@ -103,12 +103,6 @@ var snakesModule = function() {
 
     Snake.prototype.getHead = function() {
         return this.length > 0 ? this.nodes[0] : null;
-//        if (this.length > 0) {
-//            return this.nodes[0];
-//        }
-//        else {
-//            return null;
-//        }
     }
 
     Snake.prototype.add = function() {
@@ -122,18 +116,6 @@ var snakesModule = function() {
         this.group.add(node.body);
         this.nodes.push(node);
         this.length = this.nodes.length;
-//        this.layer.draw();
-
-//        if (this.head == null) {
-//            this.head = node;
-//            this.tail = this.head;
-//        }
-//        else {
-//            node.prev = this.tail;
-//            this.tail.next = node;
-//            this.tail = node;
-//            this.move();
-//        }
     }
 
     Snake.prototype.move = function() {
@@ -163,6 +145,7 @@ var snakesModule = function() {
             }
 
             this.getApple();
+            this.checkGameOver();
         }
 //        if (this.head != null && this.tail != null) {
 //            var node = this.tail;
@@ -188,12 +171,14 @@ var snakesModule = function() {
 
     Snake.prototype.isColliding = function(x, y) {
         var head = this.getHead();
-        for (var i = 1; i < this.length; i++) {
-            console.log(this.nodes[i]);
-            if (head.x == this.nodes[i].x && head.y == this.nodes[i].y) {
-                return true;
-            }
+        if (head.x == x && head.y == y) {
+            return true;
         }
+//        for (var i = 1; i < this.length; i++) {
+//            if (x == this.nodes[i].x && y == this.nodes[i].y) {
+//                return true;
+//            }
+//        }
         return false;
 //        if (!head) {
 //            node = node.next;
@@ -208,15 +193,21 @@ var snakesModule = function() {
     }
 
     Snake.prototype.checkGameOver = function() {
-        if (this.isColliding(this.head.x, this.head.y, false)) {
-            return true;
+        if (!game_over) {
+            for (var i = 1; i < this.length; i ++) {
+                if (this.isColliding(this.nodes[i].x, this.nodes[i].y)) {
+                    game_over = true;
+                    overlay();
+                    break;
+                }
+            }
         }
-        return false;
     }
 
     Snake.prototype.getApple = function() {
         if (this.length > 0 && apple) {
             if (this.isColliding(apple.x, apple.y)) {
+                console.log("iscolliding");
                 this.add();
                 apple.move();
             }
@@ -360,7 +351,6 @@ var snakesModule = function() {
                 snake.move();
                 start = frame.time;
             }
-//            console.log("TEsting");
         }, snake.layer);
 
         anim.start();
