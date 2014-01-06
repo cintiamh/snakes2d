@@ -36,9 +36,14 @@ var snakesModule = function() {
 
     Apple.prototype.move = function() {
         var x = Math.floor(Math.random() * blocks_num),
-            y = Math.floor(Math.random() * blocks_num);
-
-        if (snake.isColliding(x, y)) {
+            y = Math.floor(Math.random() * blocks_num),
+            isColliding = false;
+        for (var i = 0; i < snake.length; i++) {
+            if (snake.nodes[i].x == x && snake.nodes[i].y == y) {
+                isColliding = true;
+            }
+        }
+        if (isColliding) {
             this.move();
         }
         else {
@@ -61,8 +66,6 @@ var snakesModule = function() {
         this.y = y;
 
         this.setPosition(x, y);
-//        this.next = null;
-//        this.prev = null;
     }
 
     Node.prototype.setPosition = function(x, y) {
@@ -79,17 +82,8 @@ var snakesModule = function() {
         this.group = new Kinetic.Group();
         this.layer = new Kinetic.Layer();
         this.length = 0;
-//        this.x = x;
-//        this.y = y;
-
 
         this.layer.add(this.group);
-
-
-
-//        this.head = null;
-//        this.tail = null;
-
         this.add(); // head
         this.add(); // tail
         this.move();
@@ -98,7 +92,6 @@ var snakesModule = function() {
         count = 0;
 
         stage.add(this.layer);
-
     }
 
     Snake.prototype.getHead = function() {
@@ -107,11 +100,15 @@ var snakesModule = function() {
 
     Snake.prototype.add = function() {
         count++;
+        if (period > 10) {
+            period -= 5;
+            console.log(period);
+        }
         var head = this.getHead(),
             node = new Node(Math.floor(blocks_num / 2), Math.floor(blocks_num / 2));
 
         if (head != null) {
-            node.setPosition(head.x, head.y);
+            node.setPosition(this.nodes[this.length - 1].x, this.nodes[this.length - 1].y);
         }
         this.group.add(node.body);
         this.nodes.push(node);
@@ -147,26 +144,6 @@ var snakesModule = function() {
             this.getApple();
             this.checkGameOver();
         }
-//        if (this.head != null && this.tail != null) {
-//            var node = this.tail;
-//            while (node != this.head) {
-//                node.setPosition(node.prev.x, node.prev.y);
-//                node = node.prev;
-//            }
-//            // got to head
-//            node.setPosition(
-//                (node.x + direction[direction_index].x + blocks_num) % blocks_num,
-//                (node.y + direction[direction_index].y + blocks_num) % blocks_num);
-//
-//            if (this.checkGameOver()) {
-//                console.log("Game Over");
-//                console.log(count);
-//                this.group.remove();
-//                overlay();
-////                location.reload(false);
-//            }
-//            this.getApple();
-//        }
     }
 
     Snake.prototype.isColliding = function(x, y) {
@@ -174,22 +151,7 @@ var snakesModule = function() {
         if (head.x == x && head.y == y) {
             return true;
         }
-//        for (var i = 1; i < this.length; i++) {
-//            if (x == this.nodes[i].x && y == this.nodes[i].y) {
-//                return true;
-//            }
-//        }
         return false;
-//        if (!head) {
-//            node = node.next;
-//        }
-//        while (node != null) {
-//            if (node.x == x && node.y == y) {
-//                return true;
-//            }
-//            node = node.next;
-//        }
-//        return false;
     }
 
     Snake.prototype.checkGameOver = function() {
@@ -198,6 +160,7 @@ var snakesModule = function() {
                 if (this.isColliding(this.nodes[i].x, this.nodes[i].y)) {
                     game_over = true;
                     overlay();
+                    this.group.remove();
                     break;
                 }
             }
@@ -207,7 +170,6 @@ var snakesModule = function() {
     Snake.prototype.getApple = function() {
         if (this.length > 0 && apple) {
             if (this.isColliding(apple.x, apple.y)) {
-                console.log("iscolliding");
                 this.add();
                 apple.move();
             }
@@ -273,20 +235,6 @@ var snakesModule = function() {
         stage.add(apple.layer);
         apple.move();
     }
-
-//    function animate(layer) {
-//        var start = 0;
-//        return new Kinetic.Animation(function(frame) {
-//            if (frame.time - start >= period) {
-//                start = frame.time;
-//                if (turn != 0) {
-//                    changeDirection(turn);
-//                    turn = 0;
-//                }
-//                snake.move();
-//            }
-//        }, layer);
-//    }
 
     function handleStart() {
         console.log("Start");
@@ -363,6 +311,4 @@ var snakesModule = function() {
 
 (function() {
     snakesModule.init();
-
-
 })();
