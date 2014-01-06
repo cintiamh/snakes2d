@@ -5,6 +5,7 @@ var snakesModule = function() {
         count = 0,
         game_over = false,
         height = window.innerHeight,
+        move = false,
         period = 500, // ms
         size = 0,
         snake = null,
@@ -102,7 +103,6 @@ var snakesModule = function() {
         count++;
         if (period > 10) {
             period -= 5;
-            console.log(period);
         }
         var head = this.getHead(),
             node = new Node(Math.floor(blocks_num / 2), Math.floor(blocks_num / 2));
@@ -139,6 +139,7 @@ var snakesModule = function() {
                 }
                 tail.setPosition(x, y);
                 this.nodes.unshift(tail);
+                move = false;
             }
 
             this.getApple();
@@ -277,19 +278,22 @@ var snakesModule = function() {
         addEventListeners();
 
         window.onkeydown = function(event) {
-            switch (event.keyCode) {
-                case 37:
-                    snake.direction = snake.direction == 'right' ? 'right' : 'left';
-                    break;
-                case 38:
-                    snake.direction = snake.direction == 'down' ? 'down' : 'up';
-                    break;
-                case 39:
-                    snake.direction = snake.direction == 'left' ? 'left' : 'right';
-                    break;
-                case 40:
-                    snake.direction = snake.direction == 'up' ? 'up' : 'down';
-                    break;
+            if (!move) {
+                switch (event.keyCode) {
+                    case 37:
+                        snake.direction = snake.direction == 'right' ? 'right' : 'left';
+                        break;
+                    case 38:
+                        snake.direction = snake.direction == 'down' ? 'down' : 'up';
+                        break;
+                    case 39:
+                        snake.direction = snake.direction == 'left' ? 'left' : 'right';
+                        break;
+                    case 40:
+                        snake.direction = snake.direction == 'up' ? 'up' : 'down';
+                        break;
+                }
+                move = true;
             }
         }
 
